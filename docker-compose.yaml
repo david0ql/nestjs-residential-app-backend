@@ -1,0 +1,51 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: mariadb:11.1.2
+    restart: unless-stopped
+    networks:
+      - app-network
+    volumes:
+      - app-volume:/var/lib/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+
+  adminer:
+    image: adminer:4.8.1
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - 80:8080
+    networks:
+      - app-network
+    
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - app-network
+    ports:
+      - 3000:${API_EXPOSING_PORT}
+    depends_on:
+      - db
+      - adminer
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      API_HOST: ${API_HOST}
+      API_EXPOSING_PORT: ${API_EXPOSING_PORT}
+    
+volumes:
+  app-volume:
+
+networks:
+  app-network:
